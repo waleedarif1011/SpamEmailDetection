@@ -16,9 +16,25 @@ license: mit
 [![CI](https://github.com/waleedarif1011/spamemaildetection/actions/workflows/ci.yml/badge.svg)](https://github.com/waleedarif1011/spamemaildetection/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Classic SMS/email spam classifier with a **multi-model benchmark**, exported evaluation plots, a saved scikit-learn pipeline, and a one-click Gradio detector that highlights spam-trigger tokens.
+Classic SMS/email spam classifier with a **multi-model benchmark**, probability calibration, a saved scikit-learn pipeline, and a Gradio detector that ranks the tokens pushing a message toward spam.
 
 > **Live demo:** after the Hugging Face Space is created (see [Deploy](#deploy-hugging-face-space)), open the badge URL above. Until then, run locally with `python app.py`.
+
+## Ownership
+
+This repo is still a GitHub **fork** of an Oasis Infobyte / OIBSIP internship starter (`Apaulgithub/oibsip_taskno4`). The internship brief was “train a spam classifier on SMS data.” Everything here is a **reimplementation inspired by that task**, not a polished copy of the original notebook:
+
+- Training, metrics, plots, and the Gradio app live in this tree (`src/`, `app.py`, `artifacts/`, `tests/`).
+- The original internship README branding, Drive/Colab links, and unverified algorithm claims were removed.
+- Treat the fork badge as lineage of the *assignment*, not of this codebase’s design or packaging.
+
+## Why this isn’t just a MultinomialNB tutorial
+
+A one-model CountVectorizer + MultinomialNB notebook is the default spam demo. This project goes further in ways that show up in the demo:
+
+1. **Multi-model comparison** — Count + MultinomialNB, TF-IDF + Logistic Regression, and TF-IDF + LinearSVC on the same stratified holdout, with accuracy / precision / recall / F1 / ROC-AUC in [`artifacts/metrics.json`](artifacts/metrics.json).
+2. **Calibration** — LinearSVC has no native probabilities; it is wrapped in `CalibratedClassifierCV` so the Gradio confidence bar and CLI `spam_probability` are real calibrated scores, not hard margins.
+3. **Token attribution** — `src/predict.py` ranks tokens in the pasted message by vectorizer weight × classifier coefficient (or NB log-odds). The Gradio UI surfaces those **spam-trigger tokens** so a visitor can see *why* a message was flagged, not only the label.
 
 ## Results (held-out 20%, stratified)
 
@@ -59,7 +75,7 @@ Returns JSON with `label`, `spam_probability`, and `top_tokens`.
 - **Split:** 80/20 stratified train/test (`random_state=42`).
 - **Models:** Count + MultinomialNB; TF-IDF + LogisticRegression; TF-IDF + Calibrated LinearSVC.
 - **Export:** best pipeline → `artifacts/spam_pipeline.joblib`; metrics → `artifacts/metrics.json`; plots → `assets/`.
-- **Explainability:** per-message tokens ranked by vectorizer weight × classifier coefficient (or NB log-odds).
+- **Explainability:** per-message tokens ranked by vectorizer weight × classifier coefficient (or NB log-odds) — same scores the Gradio demo highlights.
 
 ## Tests & CI
 
@@ -85,9 +101,9 @@ Step-by-step: [`docs/hf-space-deploy.md`](docs/hf-space-deploy.md).
 ## Layout
 
 ```
-app.py           Gradio spam detector (4 presets)
+app.py           Gradio spam detector (4 presets + token attribution)
 src/train.py     multi-model train + metrics/plots
-src/predict.py   CLI + token contributions
+src/predict.py   CLI + calibrated probs + token contributions
 data/spam.csv    SMS spam dataset
 artifacts/       pipeline + metrics.json
 assets/          confusion matrix + ROC plots

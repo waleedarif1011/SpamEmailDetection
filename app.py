@@ -104,8 +104,10 @@ def build_ui() -> gr.Blocks:
     with gr.Blocks(title="Spam Email Detection") as demo:
         gr.Markdown(
             "# Spam Email / SMS Detector\n\n"
-            "Paste a message to classify it as **spam** or **ham**, "
-            "with confidence and the tokens that most push toward spam.\n\n"
+            "Paste a message to classify it as **spam** or **ham**. "
+            "Confidence comes from a **calibrated** LinearSVC pipeline; "
+            "the token list ranks words that most push the score toward spam "
+            "(vectorizer weight × classifier coefficient).\n\n"
             + _metrics_blurb()
         )
         with gr.Row():
